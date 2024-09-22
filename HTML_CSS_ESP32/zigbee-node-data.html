@@ -1,0 +1,173 @@
+<html></html>
+<head>
+    <title>ESP32 WebServer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: flex-start; 
+            align-items: center;
+            flex-direction: column; 
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background-color: #2cb3f1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 10px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            height: auto; 
+        }
+        .Zigbee-data {
+            text-align: center;
+            background-color: #2cb3f1; 
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 10px; 
+            height: 1000px; 
+            position: relative;
+        }
+        .Zigbee-data p {
+            font-size: 36px; /* Adjust the size as needed */
+            font-weight: bold;
+            color: black; /* Change color if needed */
+        }
+        h1 {
+            color: #ffffff; 
+            margin-bottom: 10px;
+        }
+        p {
+            margin: 0; 
+        }
+        /* New CSS for temperature and humidity section */
+        .sensor-data {
+            margin-top: 50px; /* Dữ liệu cách từ Zigbee Node */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+        }
+        .sensor-item {
+            display: flex;
+            align-items: center; /* Centers items vertically */
+            justify-content: space-between; /* Adds space between icon and text */
+            gap: 100px;
+            width: 100%;
+            padding: 10px;
+            padding-left: 600px; /* Adjust this value to move items to the right */
+        }
+
+        .sensor-item img {
+            width: 100px;
+            height: 100px;
+        }
+
+        .sensor-item p {
+            font-size: 50px;
+            font-weight: bold;
+            color: black;
+            line-height: 50px;
+            text-align: left;
+            flex-grow: 1; /* Ensure the text takes up remaining space */
+        }
+        /* CSS for the Connect/Disconnect Button */
+        .status-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: red;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 150px; /* Đặt kích thước cố định cho nút */
+            text-align: center; /* Giữ văn bản ở giữa */
+        }
+        .status-button.connected {
+            background-color: green;
+        }
+        @media (max-width: 400px) {
+            .sensor-item {
+                flex-direction: column; /* Xếp icon và chữ theo hàng dọc trên điện thoại */
+                justify-content: center;
+                align-items: center;
+                padding-left: 0; /* Xóa padding-left để tránh tràn rìa điện thoại */
+                gap: 10px; /* Giảm khoảng cách giữa icon và chữ */
+                width: 100%; /* Đảm bảo phần tử chiếm hết chiều rộng */
+            }
+            .sensor-item img {
+                width: 70px; /* Smaller icons on mobile */
+                height: 70px;
+            }
+            .sensor-item p {
+                font-size: 35px; /* Giảm kích thước chữ trên điện thoại */
+                text-align: center;
+            }
+            .status-button {
+                position: absolute;
+                top: 480px;
+                right: 90px;
+            }
+        }
+    </style>
+        <script>
+        function toggleConnectionStatus() {
+        var button = document.getElementById("statusButton");
+        var newStatus = button.innerHTML === "Disconnected" ? "Connected" : "Disconnected";
+
+        // Send a request to the ESP32 to update the connection status
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/zigbee-node-page?state=" + newStatus, true);
+        xhr.send();
+
+        // Update the button appearance
+        button.innerHTML = newStatus;
+        if (newStatus === "Connected") {
+            button.classList.remove("disconnected");
+            button.classList.add("connected");
+        } else {
+            button.classList.remove("connected");
+            button.classList.add("disconnected");
+        }
+    }
+        </script>
+</head>
+<body>
+    <div class="container">
+        <h1>ESP32 Hub WebServer</h1>
+        <p>Welcome to your ESP32 web server!</p>
+    </div>
+    <div class="Zigbee-data">
+        <p>Zigbee Node.</p>
+        <div class="sensor-data">
+            <div class="sensor-item">
+                <img src="https://img.icons8.com/?size=100&id=6yomF9LAoWai&format=png&color=000000" alt="Temperature Icon">
+                <p>Temperature: 25 C</p>
+            </div>
+            <div class="sensor-item">
+                <img src="https://img.icons8.com/?size=100&id=qnVnsIiJZsxS&format=png&color=000000" alt="Humidity Icon">
+                <p>Humidity: 60 %</p>
+            </div>
+        </div>
+        <button id="statusButton" class="status-button disconnected" onclick="toggleConnectionStatus()">Disconnected</button>
+    </div>
+</body>
+</html>
