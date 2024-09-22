@@ -148,6 +148,30 @@
             button.classList.add("disconnected");
         }
     }
+        // Hàm này dùng để lấy trạng thái Zigbee từ ESP32 và cập nhật giao diện
+        function updateConnectionStatus() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                var response = JSON.parse(xhr.responseText);
+                var button = document.getElementById("statusButton");
+                
+                // Cập nhật nút dựa trên phản hồi JSON từ ESP32
+                if (response.Connected === "Connected") {
+                    button.innerHTML = "Connected";
+                    button.classList.remove("disconnected");
+                    button.classList.add("connected");
+                } else {
+                    button.innerHTML = "Disconnected";
+                    button.classList.remove("connected");
+                    button.classList.add("disconnected");
+                }
+            }
+        };
+        xhr.open("GET", "/zigbee-node-page", true);
+        xhr.send();
+    }
+        setInterval(updateConnectionStatus, 1000);
         </script>
 </head>
 <body>
