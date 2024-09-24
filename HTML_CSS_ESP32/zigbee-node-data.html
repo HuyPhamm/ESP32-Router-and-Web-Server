@@ -133,30 +133,16 @@
         var button = document.getElementById("statusButton");
         var newStatus = button.innerHTML === "Disconnected" ? "Connected" : "Disconnected";
 
-        // Send a request to the ESP32 to update the connection status
+        // Gửi yêu cầu cập nhật trạng thái kết nối lên ESP32
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "/zigbee-node-page?state=" + newStatus, true);
-        xhr.send();
-
-        // Update the button appearance
-        button.innerHTML = newStatus;
-        if (newStatus === "Connected") {
-            button.classList.remove("disconnected");
-            button.classList.add("connected");
-        } else {
-            button.classList.remove("connected");
-            button.classList.add("disconnected");
-        }
-    }
-        // Hàm này dùng để lấy trạng thái Zigbee từ ESP32 và cập nhật giao diện
-        function updateConnectionStatus() {
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4 && xhr.status == 200) {
+        
+        // Nhận phản hồi JSON từ ESP32 và cập nhật nút trạng thái
+        xhr.onload = function() {
+            if (xhr.status == 200) {
                 var response = JSON.parse(xhr.responseText);
-                var button = document.getElementById("statusButton");
-                
-                // Cập nhật nút dựa trên phản hồi JSON từ ESP32
+
+                // Cập nhật giao diện dựa trên phản hồi JSON
                 if (response.Connected === "Connected") {
                     button.innerHTML = "Connected";
                     button.classList.remove("disconnected");
@@ -168,10 +154,32 @@
                 }
             }
         };
-        xhr.open("GET", "/zigbee-node-page", true);
         xhr.send();
-    }
-        setInterval(updateConnectionStatus, 1000);
+      }
+        // Hàm này dùng để lấy trạng thái Zigbee từ ESP32 và cập nhật giao diện
+        function updateConnectionStatus() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                var response = JSON.parse(xhr.responseText);
+                var button = document.getElementById("statusButton");
+
+                // Cập nhật trạng thái nút dựa trên phản hồi từ ESP32
+                if (response.Connected === "Connected") {
+                    button.innerHTML = "Connected";
+                    button.classList.remove("disconnected");
+                    button.classList.add("connected");
+                } else {
+                    button.innerHTML = "Disconnected";
+                    button.classList.remove("connected");
+                    button.classList.add("disconnected");
+                }
+            }
+        };
+        xhr.open("GET", "/ZigbeeNodeStatus", true);
+        xhr.send();
+      }
+      setInterval(updateConnectionStatus, 1000);
         </script>
 </head>
 <body>

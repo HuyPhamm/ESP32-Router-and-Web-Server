@@ -64,6 +64,7 @@ void handleZigbeeNodePage() {
   } else if (state == "Disconnected") {
     accessZigbeeConnected = false;
   }
+  server.send(200, "text/html", zigbeePage);
 
   if (isConnected) {
     jsonZigbeeResponse = "{\"Connected\":\"Connected\"}";
@@ -72,7 +73,7 @@ void handleZigbeeNodePage() {
   }
   server.send(200, "text/html", zigbeePage);
   // Gửi phản hồi JSON cho Zigbee Page
-  server.send(200, "application/json", jsonZigbeeResponse);
+  server.send(200, "application/json", jsonZigbeeResponse); 
 }
 
 void setup() {

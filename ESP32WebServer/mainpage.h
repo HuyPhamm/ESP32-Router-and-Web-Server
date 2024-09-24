@@ -133,7 +133,7 @@ const char MAIN_page[] PROGMEM = R"====(
             xhttp.send();
         }
 
-        // Update status every 1 second
+        // Update status 
         setInterval(getZigbeeNodeStatus, 1000);
 
         // Fetch data initially
