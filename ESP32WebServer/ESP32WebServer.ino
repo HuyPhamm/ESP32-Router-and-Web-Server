@@ -2,6 +2,8 @@
 #include "WebServer.h"
 #include "mainpage.h"
 #include "ZigbeePage.h"
+#include <SoftwareSerial.h>
+#include <ArduinoJson.h>
 
 const char* ssid = "ESP32_WiFi";
 const char* password = "12345678";
@@ -15,11 +17,19 @@ IPAddress subnet(255,255,255,0);
 
 WebServer server(80);
 
-unsigned long previousMillis = 0; // Lưu thời gian từ lần gửi cuối
-const long interval = 1000; // Khoảng thời gian 5 giây để xác định mất kết nối
+//unsigned long previousMillis = 0; // Lưu thời gian từ lần gửi cuối
+//const long interval = 1000; // Khoảng thời gian 5 giây để xác định mất kết nối
 
 bool isConnected = false; // Biến trạng thái kết nối
 bool accessZigbeeConnected = false;      
+
+SoftwareSerial LoraSerial(27, 26); //TX, RX
+
+#define M0 12
+#define M1 14      
+
+// Tạo một đối tượng JsonDocument cho LORA có dung lượng 100 byte
+StaticJsonDocument<100> Lora;
 
 void handleRoot() {
   String htmlContent = MAIN_page;
@@ -31,17 +41,34 @@ void handleNode() {
   unsigned long currentMillis = millis(); // Lấy thời gian hiện tại
   
   // Kiểm tra có dữ liệu từ Serial
-  if (Serial.available() > 0 && accessZigbeeConnected == true) {
-    previousMillis = currentMillis; // Cập nhật thời gian khi có dữ liệu
+  if (LoraSerial.available() && accessZigbeeConnected == true) {
     isConnected = true;             // Đặt trạng thái là "Connected"
-    Serial.read();
-  }
+    String line = LoraSerial.readStringUntil('\n');
 
+    // Chuyển đổi chuỗi JSON thành đối tượng JsonDocument
+    DeserializationError error = deserializeJson(Lora, line);
+
+    float temperature = Lora["temperature"];
+    float humidity = Lora["humidity"];
+
+    //previousMillis = currentMillis; // Cập nhật thời gian khi có dữ liệu
+    // In các giá trị ra màn hình nối tiếp
+    Serial.print("Temperature: ");
+    Serial.print(temperature);
+    Serial.println(" C");
+    Serial.print("Humidity: ");
+    Serial.print(humidity);
+    Serial.println(" %");
+  }
+  else
+    isConnected = false;
+
+/*
   // Kiểm tra nếu vượt qua 5 giây không có dữ liệu từ Serial
   if (currentMillis - previousMillis >= interval) {
     isConnected = false; // Không còn kết nối sau 5 giây
   }
-
+*/
   // Trả về trạng thái kết nối dưới dạng JSON
   if (isConnected) {
     jsonResponse = "{\"Connected\":\"Connected\"}";
@@ -79,6 +106,7 @@ void handleZigbeeNodePage() {
 void setup() {
   // Khởi tạo kết nối WiFi
   Serial.begin(115200);
+  LoraSerial.begin(9600);
   WiFi.softAP(ssid, password);
   WiFi.softAPConfig(local_ip, gateway, subnet);
   WiFi.begin(wifi_ssid, wifi_password);
@@ -88,6 +116,13 @@ void setup() {
     Serial.print("..");
   }
   Serial.println();
+
+  // Cấu hình Cho LORA ở chế độ Normal
+  pinMode(M0, OUTPUT);        
+  pinMode(M1, OUTPUT);
+  digitalWrite(M0, LOW);       // Set 2 chân M0 và M1 xuống LOW 
+  digitalWrite(M1, LOW);       // để hoạt động ở chế độ Normal
+
   // Cấu hình route cho trang chính "/"
   server.on("/", handleRoot);
   server.on("/ZigbeeNodeStatus", handleNode);
