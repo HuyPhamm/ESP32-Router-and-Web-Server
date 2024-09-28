@@ -17,11 +17,11 @@ IPAddress subnet(255,255,255,0);
 
 WebServer server(80);
 
-//unsigned long previousMillis = 0; // Lưu thời gian từ lần gửi cuối
+unsigned long previousMillis = 0; // Lưu thời gian từ lần gửi cuối
 //const long interval = 1000; // Khoảng thời gian 5 giây để xác định mất kết nối
 
 bool isConnected = false; // Biến trạng thái kết nối
-bool accessZigbeeConnected = false;      
+bool accessZigbeeConnected = true;      
 
 SoftwareSerial LoraSerial(27, 26); //TX, RX
 
@@ -48,8 +48,8 @@ void handleNode() {
     // Chuyển đổi chuỗi JSON thành đối tượng JsonDocument
     DeserializationError error = deserializeJson(Lora, line);
 
-    float temperature = Lora["temperature"];
-    float humidity = Lora["humidity"];
+    float temperature = Lora["Temperature_Lora"];
+    float humidity = Lora["Humidity_Lora"];
 
     //previousMillis = currentMillis; // Cập nhật thời gian khi có dữ liệu
     // In các giá trị ra màn hình nối tiếp
@@ -85,22 +85,38 @@ void handleZigbeeNodePage() {
   String zigbeePage = Zigbee_page;
   String state = server.arg("state");
 
-  // Update accessZigbeeConnected based on the state from the button
-  if (state == "Connected") {
-    accessZigbeeConnected = true;
-  } else if (state == "Disconnected") {
-    accessZigbeeConnected = false;
-  }
-  server.send(200, "text/html", zigbeePage);
+  // Nếu nhận được trạng thái "Connecting", chờ phản hồi trong 3 giây
+  if (state == "Connecting") {
+    unsigned long startMillis = millis();
+    bool responseReceived = false;
 
-  if (isConnected) {
-    jsonZigbeeResponse = "{\"Connected\":\"Connected\"}";
-  } else {
-    jsonZigbeeResponse = "{\"Connected\":\"Disconnected\"}";
+    // Chờ dữ liệu từ Zigbee node trong 3 giây
+    while (millis() - startMillis < 3000) {
+      if (LoraSerial.available()) {
+        responseReceived = true;
+        isConnected = true;
+        break;
+      }
+    }
+
+    if (responseReceived) {
+      // Nếu nhận được phản hồi từ Zigbee, chuyển sang trạng thái "Connected"
+      accessZigbeeConnected = true;
+      server.send(200, "application/json", "{\"Connected\":\"Connected\"}");
+    } else {
+      // Nếu không có phản hồi, vẫn giữ trạng thái "Disconnected"
+      accessZigbeeConnected = false;
+      server.send(200, "application/json", "{\"Connected\":\"Disconnected\"}");
+    }
   }
+  else if (state == "Disconnected") {
+    // Ngay lập tức chuyển sang "Disconnected" khi ấn nút
+    accessZigbeeConnected = false;
+    server.send(200, "application/json", "{\"Connected\":\"Disconnected\"}");
+  }
+
+  // Gửi lại trang Zigbee
   server.send(200, "text/html", zigbeePage);
-  // Gửi phản hồi JSON cho Zigbee Page
-  server.send(200, "application/json", jsonZigbeeResponse); 
 }
 
 void setup() {

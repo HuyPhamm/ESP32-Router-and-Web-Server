@@ -105,6 +105,9 @@ const char Zigbee_page[] PROGMEM = R"====(
         .status-button.connected {
             background-color: green;
         }
+        .status-button.connecting {
+            background-color: gray;
+        }
         @media (max-width: 400px) {
             .sensor-item {
                 flex-direction: column; /* Xếp icon và chữ theo hàng dọc trên điện thoại */
@@ -129,58 +132,75 @@ const char Zigbee_page[] PROGMEM = R"====(
             }
         }
     </style>
-      <script>
-        function toggleConnectionStatus() {
-        var button = document.getElementById("statusButton");
-        var newStatus = button.innerHTML === "Disconnected" ? "Connected" : "Disconnected";
+    <script>
+      function toggleConnectionStatus() {
+          var button = document.getElementById("statusButton");
 
-        // Gửi yêu cầu cập nhật trạng thái kết nối lên ESP32
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/zigbee-node-page?state=" + newStatus, true);
-        
-        // Nhận phản hồi JSON từ ESP32 và cập nhật nút trạng thái
-        xhr.onload = function() {
-            if (xhr.status == 200) {
+          if (button.innerHTML === "Connected") {
+            // Khi đang Connected, chuyển ngay về Disconnected
+            button.innerHTML = "Disconnected";
+            button.classList.remove("connected");
+            button.classList.add("disconnected");
+
+            // Gửi trạng thái Disconnected lên server
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/zigbee-node-page?state=Disconnected", true);
+            xhr.send();
+          } else {
+            // Khi đang Disconnected, chuyển sang trạng thái Connecting
+            button.innerHTML = "Connecting";
+            button.classList.remove("disconnected");
+            button.classList.add("connecting");
+
+            // Gửi trạng thái Connecting lên server và chờ phản hồi
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/zigbee-node-page?state=Connecting", true);
+
+            xhr.onload = function() {
+              if (xhr.status == 200) {
                 var response = JSON.parse(xhr.responseText);
 
-                // Cập nhật giao diện dựa trên phản hồi JSON
+                // Nếu server trả về Connected, chuyển nút thành Connected
                 if (response.Connected === "Connected") {
-                    button.innerHTML = "Connected";
-                    button.classList.remove("disconnected");
-                    button.classList.add("connected");
+                  button.innerHTML = "Connected";
+                  button.classList.remove("connecting");
+                  button.classList.add("connected");
                 } else {
-                    button.innerHTML = "Disconnected";
-                    button.classList.remove("connected");
-                    button.classList.add("disconnected");
+                  // Nếu không, chuyển lại thành Disconnected
+                  button.innerHTML = "Disconnected";
+                  button.classList.remove("connecting");
+                  button.classList.add("disconnected");
                 }
-            }
-        };
-        xhr.send();
-      }
-        // Hàm này dùng để lấy trạng thái Zigbee từ ESP32 và cập nhật giao diện
+              }
+            };
+            xhr.send();
+          }
+        }
+
+        // Hàm cập nhật trạng thái từ server (nếu có thay đổi)
         function updateConnectionStatus() {
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                var response = JSON.parse(xhr.responseText);
-                var button = document.getElementById("statusButton");
+              var response = JSON.parse(xhr.responseText);
+              var button = document.getElementById("statusButton");
 
-                // Cập nhật trạng thái nút dựa trên phản hồi từ ESP32
-                if (response.Connected === "Connected") {
-                    button.innerHTML = "Connected";
-                    button.classList.remove("disconnected");
-                    button.classList.add("connected");
-                } else {
-                    button.innerHTML = "Disconnected";
-                    button.classList.remove("connected");
-                    button.classList.add("disconnected");
-                }
+              if (response.Connected === "Connected") {
+                button.innerHTML = "Connected";
+                button.classList.remove("disconnected", "connecting");
+                button.classList.add("connected");
+              } else {
+                button.innerHTML = "Disconnected";
+                button.classList.remove("connected", "connecting");
+                button.classList.add("disconnected");
+              }
             }
-        };
-        xhr.open("GET", "/ZigbeeNodeStatus", true);
-        xhr.send();
-      }
-      setInterval(updateConnectionStatus, 1000);
+          };
+          xhr.open("GET", "/ZigbeeNodeStatus", true);
+          xhr.send();
+        }
+
+        setInterval(updateConnectionStatus, 1000); // Cập nhật mỗi 1 giây
       </script>
 </head>
 <body>
@@ -336,4 +356,3 @@ const char Zigbee_page[] PROGMEM = R"====(
 </body>
 </html>
 )====";
-
