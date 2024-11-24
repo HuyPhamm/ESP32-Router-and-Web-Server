@@ -1,4 +1,4 @@
-const char Zigbee_page[] PROGMEM = R"====(
+const char Lora_page[] PROGMEM = R"====(
 <html></html>
 <head>
     <title>ESP32 WebServer</title>
@@ -29,7 +29,7 @@ const char Zigbee_page[] PROGMEM = R"====(
             justify-content: flex-start; 
             height: auto; 
         }
-        .Zigbee-data {
+        .Lora-data {
             text-align: center;
             background-color: #2cb3f1; 
             padding: 20px;
@@ -41,7 +41,7 @@ const char Zigbee_page[] PROGMEM = R"====(
             height: 1000px; 
             position: relative;
         }
-        .Zigbee-data p {
+        .Lora-data p {
             font-size: 36px; /* Adjust the size as needed */
             font-weight: bold;
             color: black; /* Change color if needed */
@@ -55,7 +55,7 @@ const char Zigbee_page[] PROGMEM = R"====(
         }
         /* New CSS for temperature and humidity section */
        .sensor-data {
-            margin-top: 50px; /* Dữ liệu cách từ Zigbee Node */
+            margin-top: 50px; /* Dữ liệu cách từ Lora Node */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -143,7 +143,7 @@ const char Zigbee_page[] PROGMEM = R"====(
 
             // Gửi trạng thái Disconnected lên server
             var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/zigbee-node-page?state=Disconnected", true);
+            xhr.open("GET", "/lora-node-page?state=Disconnected", true);
             xhr.send();
         } else {
             button.innerHTML = "Connecting";
@@ -152,7 +152,7 @@ const char Zigbee_page[] PROGMEM = R"====(
 
             // Gửi trạng thái Connecting lên server và chờ phản hồi
             var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/zigbee-node-page?state=Connecting", true);
+            xhr.open("GET", "/lora-node-page?state=Connecting", true);
 
             xhr.onload = function() {
                 if (xhr.status == 200) {
@@ -202,7 +202,7 @@ const char Zigbee_page[] PROGMEM = R"====(
                 }
             }
         };
-        xhr.open("GET", "/ZigbeeNodeStatus", true);
+        xhr.open("GET", "/LoRaNodeStatus", true);
         xhr.send();
     }
 
@@ -215,8 +215,8 @@ const char Zigbee_page[] PROGMEM = R"====(
         <h1>ESP32 Hub WebServer</h1>
         <p>Welcome to your ESP32 web server!</p>
     </div>
-    <div class="Zigbee-data">
-        <p>Zigbee Node.</p>
+    <div class="Lora-data">
+        <p>Lora Node.</p>
         <div class="sensor-data">
             <div class="sensor-item">
                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAA

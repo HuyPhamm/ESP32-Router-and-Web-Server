@@ -1,5 +1,4 @@
 const char MAIN_page[] PROGMEM = R"====(
-<!DOCTYPE html>
 <html>
 <head>
     <title>ESP32 WebServer</title>
@@ -46,11 +45,11 @@ const char MAIN_page[] PROGMEM = R"====(
             margin: 0;
             color: #131212; 
         }
-        .zigbee-node {
-            border: 2px solid red;
+        .node {
+            border: 2px solid rgb(0, 0, 0);
             padding: 15px;
             margin-top: 20px;
-            width: 250px;
+            width: 245px;
             height: 70px;
             background-color: rgba(255, 255, 255, 0.8);
             border-radius: 8px;
@@ -59,32 +58,32 @@ const char MAIN_page[] PROGMEM = R"====(
             margin-left: 20px;
             cursor: pointer; /* Thêm con trỏ chuột để cho biết có thể click */
         }
-        .zigbee-node h3 {
+        .node h3 {
             margin: 0;
-            padding: 0;
+            padding: 5;
             color: #333;
         }
-        .zigbee-node p {
-            margin: 5px 0;
-            color: #000000;
+        .node span {
+            display: block;
+            margin-top: 5px;
+            font-weight: bold;
         }
+        .connected {
+            color: green;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .disconnected {
+            color: red;
+            font-size: 20px;
+            font-weight: bold;
+        }       
         h1 {
             color: #ffffff; 
             margin-bottom: 10px;
         }
         p {
             margin: 0; 
-        }
-        .zigbee-node-status {
-            font-size: 24px; 
-            font-weight: bold; 
-            margin-top: 20px; 
-        }
-        .connected {
-            color: green;
-        }
-        .disconnected {
-            color: red;
         }
         @media (max-width: 400px) {
             body {
@@ -94,10 +93,10 @@ const char MAIN_page[] PROGMEM = R"====(
                 padding: 10px;
                 width: 100%;
             }
-            .zigbee-node {
+            .node {
                 width: 40%;
                 height: auto;
-                margin: 30px 0;
+                margin: 8px 0;
             }
             .content-box {
                 width: 100%;
@@ -110,38 +109,39 @@ const char MAIN_page[] PROGMEM = R"====(
     </style>
     <script>
         // Function to get Zigbee status from the ESP32
-        function getZigbeeNodeStatus() {
+        function getNodeStatus(nodeId, statusUrl, statusElementId) {
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    var ZigbeeNodeStatus = JSON.parse(this.responseText);
+                    var nodeStatus = JSON.parse(this.responseText);
+                    var statusElement = document.getElementById(statusElementId);
 
-                    // Get the status element
-                    var statusElement = document.getElementById("Connected");
-
-                    // Check the connection status and update the text and class
-                    if (ZigbeeNodeStatus.Connected === "Connected") {
+                    if (nodeStatus.Connected === "Connected") {
                         statusElement.innerHTML = "Connected";
-                        statusElement.className = "zigbee-node-status connected";
+                        statusElement.className = "connected";
                     } else {
                         statusElement.innerHTML = "Disconnected";
-                        statusElement.className = "zigbee-node-status disconnected";
+                        statusElement.className = "disconnected";
                     }
                 }
             };
-            xhttp.open("GET", "/ZigbeeNodeStatus", true);
+            xhttp.open("GET", statusUrl, true);
             xhttp.send();
         }
 
-        // Update status 
-        setInterval(getZigbeeNodeStatus, 1000);
+        // Periodically update all node statuses
+        function updateAllStatuses() {
+            getNodeStatus("Zigbee", "/ZigbeeNodeStatus", "ZigbeeStatus");
+            getNodeStatus("LoRa", "/LoRaNodeStatus", "LoRaStatus");
+            //getNodeStatus("WiFi", "/WiFiNodeStatus", "WiFiStatus");
+            //getNodeStatus("BLE", "/BLENodeStatus", "BLEStatus");
+        }
 
-        // Fetch data initially
-        window.onload = getZigbeeNodeStatus;
+        setInterval(updateAllStatuses, 1000);
+        window.onload = updateAllStatuses;
 
-        // Function to redirect to a new page when Zigbee Node is clicked
-        function goToZigbeePage() {
-            window.location.href = "/zigbee-node-page"; // Điều hướng đến trang mới
+        function goToNodePage(node) {
+            window.location.href = `/${node}-node-page`;
         }
     </script>
 </head>
@@ -153,9 +153,21 @@ const char MAIN_page[] PROGMEM = R"====(
 
     <div class="content-box">
         <p>This is a new content box underneath the ESP32 Hub WebServer box.</p>
-        <div class="zigbee-node" onclick="goToZigbeePage()">
+        <div class="node" onclick="goToNodePage('zigbee')">
             <h3>Zigbee Node</h3>
-            <span id="Connected" class="zigbee-node-status disconnected">Unknown</span>
+            <span id="ZigbeeStatus" class="connected">Connected</span>
+        </div>
+        <div class="node" onclick="goToNodePage('lora')">
+            <h3>LoRa Node</h3>
+            <span id="LoRaStatus" class="disconnected">Disconnect</span>
+        </div>
+        <div class="node" onclick="goToNodePage('wifi')">
+            <h3>WiFi Node</h3>
+            <span id="WiFiStatus" class="disconnected">Disconnect</span>
+        </div>
+        <div class="node" onclick="goToNodePage('ble')">
+            <h3>BLE Node</h3>
+            <span id="BLEStatus" class="disconnected">Disconnect</span>
         </div>
     </div>
 </body>

@@ -132,14 +132,14 @@
     <script>
         function toggleConnectionStatus() {
             var button = document.getElementById("statusButton");
-            var newStatus = button.innerHTML === "Disconnected" ? "Connecting..." : "Disconnected";
+            var newStatus = button.innerHTML === "Disconnected" ? "Connecting" : "Disconnected";
 
             // Gửi yêu cầu cập nhật trạng thái kết nối lên ESP32
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/zigbee-node-page?state=" + newStatus, true);
 
             // Chuyển trạng thái sang "Connecting"
-            button.innerHTML = "Connecting...";
+            button.innerHTML = "Connecting";
             button.classList.remove("disconnected", "connected");
             button.classList.add("connecting");
 
@@ -166,13 +166,16 @@
             xhr.send();
         }
 
-        function updateConnectionStatus() {
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
+    // Hàm cập nhật trạng thái kết nối và dữ liệu cảm biến
+    function updateSensorData() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                try {
                     var response = JSON.parse(xhr.responseText);
+                    
+                    // Cập nhật trạng thái kết nối
                     var button = document.getElementById("statusButton");
-
                     if (response.Connected === "Connected") {
                         button.innerHTML = "Connected";
                         button.classList.remove("disconnected", "connecting");
@@ -182,13 +185,22 @@
                         button.classList.remove("connected", "connecting");
                         button.classList.add("disconnected");
                     }
-                }
-            };
-            xhr.open("GET", "/ZigbeeNodeStatus", true);
-            xhr.send();
-        }
 
-        setInterval(updateConnectionStatus, 1000);
+                    // Cập nhật dữ liệu nhiệt độ và độ ẩm
+                    document.getElementById("temperature").innerHTML = "Temperature: " + response.Temperature + " C";
+                    document.getElementById("humidity").innerHTML = "Humidity: " + response.Humidity + " %";
+                } catch (error) {
+                    console.error("JSON Parse Error: ", error);
+                }
+            }
+        };
+        xhr.open("GET", "/zigbee-node-page", true);
+        xhr.send();
+    }
+
+    // Gọi hàm cập nhật dữ liệu mỗi 1 giây
+    setInterval(updateSensorData, 1000);
+
     </script>
 </head>
 <body>
